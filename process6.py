@@ -1,25 +1,29 @@
-from multiprocessing import Process, Lock, Value
-
-def increment_counter(counter, lock):
-    for _ in range(1000):
+# Sharing data between processes using multiprocessing.Lock
+import multiprocessing
+import time
+def write1(lock):
+    with open("file.txt",'w') as file:
+        # lock.acquire()
         with lock:
-            counter.value += 1
+            for _ in range(5):                   
+                file.write("Kabul\n")
+                time.sleep(1)
+                print("write1")
+        # lock.release()
 
-if __name__ == "__main__":
-    # Shared counter between processes
-    counter = Value('i', 0)  # 'i' is for integers
-    lock = Lock()
+def write2(lock):
+    with open("file.txt",'w') as file:
+        with lock:
+            for _ in range(5):
+                file.write("Berlin\n")
+                time.sleep(1)
+                print("write2")
 
-    # Create multiple processes
-    processes = [Process(target=increment_counter, args=(counter, lock)) for _ in range(5)]
+lock=multiprocessing.Lock()
+p1=multiprocessing.Process(target=write1,args=(lock,))
+p2=multiprocessing.Process(target=write2,args=(lock,))
 
-    # Start the processes
-    for p in processes:
-        p.start()
-
-    # Wait for all processes to complete
-    for p in processes:
-        p.join()
-
-    # Output the final counter value
-    print(f"Final counter value: {counter.value}")
+p1.start()
+p2.start()
+p1.join()
+p2.join()
